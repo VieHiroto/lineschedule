@@ -1,0 +1,90 @@
+(function () {
+  'use strict';
+
+  const LINE_USERS = {
+    '佐藤 優志': 'U428ecca76ad4736b8945bf51932a2835',
+    '牧野 祐大': 'LINE_USER_ID_2',
+  };
+
+  const RENDER_WEBHOOK_URL = 'https://lineschedule-xd9p.onrender.com';
+
+  function insertButton() {
+    if (document.querySelector('#sendLineBtn')) return;
+
+    const btn = document.createElement('button');
+    btn.textContent = 'LINE通知送信';
+    btn.id = 'sendLineBtn';
+    btn.style = 'position:fixed;bottom:20px;right:20px;padding:10px 20px;z-index:9999;background:#28a745;color:#fff;border:none;border-radius:5px;cursor:pointer;';
+    btn.onclick = handleSend;
+    document.body.appendChild(btn);
+  }
+
+  function extractSchedule() {
+    const times = Array.from(document.querySelectorAll('.timeTableLeft .timeCell')).map(el => el.textContent.trim().replace('：', ':'));
+    const columns = document.querySelectorAll('th.innerCol');
+    const grouped = {};
+    const today = new Date();
+    const maxDate = new Date();
+    maxDate.setDate(today.getDate() + 7);
+
+    columns.forEach((col, colIndex) => {
+      const html = col.innerHTML;
+      const dateMatch = html.match(/rsvRequestDate1=(\d{8})/);
+      if (!dateMatch) return;
+
+      const dateStr = dateMatch[1];
+      const dateObj = new Date(dateStr.substring(0,4), dateStr.substring(4,6) - 1, dateStr.substring(6,8));
+      if (dateObj > maxDate) return;
+
+      const dateKey = `${dateObj.getMonth() + 1}/${dateObj.getDate()}`;
+      const cells = col.querySelectorAll('td');
+      cells.forEach((td, rowIndex) => {
+        const open = td.querySelector('a.icnOpen');
+        if (open) {
+          if (!grouped[dateKey]) grouped[dateKey] = [];
+          grouped[dateKey].push(times[rowIndex]);
+        }
+      });
+    });
+
+    let scheduleText = '';
+    for (const [day, times] of Object.entries(grouped)) {
+      scheduleText += `${day} ${times.join(' ')}\n`;
+    }
+    return scheduleText.trim();
+  }
+
+  function handleSend() {
+    const stylistNameEl = document.querySelector('.selectedStylistName');
+    if (!stylistNameEl) return alert('送信するスタイリストのスケジュールを選択してください');
+
+    const name = stylistNameEl.textContent.trim();
+    const userId = LINE_USERS[name];
+    if (!userId) return alert('送信できませんでした（LINE IDが未登録です）');
+
+    const scheduleText = extractSchedule();
+    if (!scheduleText) return alert('送信できるスケジュールがありません');
+
+    const finalMessage = `${name}の今週の空き状況です。\n↓\n${scheduleText}`;
+
+    const payload = {
+      userId,
+      message: finalMessage
+    };
+
+    fetch(RENDER_WEBHOOK_URL, {
+      method: 'POST',
+      body: JSON.stringify(payload),
+      headers: { 'Content-Type': 'application/json' },
+    })
+      .then(res => {
+        if (res.ok) alert('送信しました');
+        else throw new Error('送信失敗');
+      })
+      .catch(err => alert(`送信できませんでした: ${err.message}`));
+  }
+
+  const observer = new MutationObserver(() => insertButton());
+  observer.observe(document.body, { childList: true, subtree: true });
+  insertButton();
+})();
