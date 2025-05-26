@@ -4,10 +4,7 @@ const axios = require('axios');
 const cors = require('cors');
 
 const app = express();
-
-// CORSを全許可（必要に応じて制限も可能）
-app.use(cors());
-
+app.use(cors()); // CORS許可
 app.use(bodyParser.json());
 
 const LINE_TOKEN = process.env.LINE_TOKEN;
@@ -20,25 +17,32 @@ app.post('/', async (req, res) => {
   }
 
   try {
-    await axios.post('https://api.line.me/v2/bot/message/push', {
-      to: userId,
-      messages: [{
-        type: 'text',
-        text: message
-      }]
-    }, {
-      headers: {
-        'Authorization': `Bearer ${LINE_TOKEN}`,
-        'Content-Type': 'application/json'
+    // LINEへ送信（正しい形式）
+    const response = await axios.post(
+      'https://api.line.me/v2/bot/message/push',
+      {
+        to: userId,
+        messages: [
+          {
+            type: 'text',
+            text: message
+          }
+        ]
+      },
+      {
+        headers: {
+          'Authorization': `Bearer ${LINE_TOKEN}`,
+          'Content-Type': 'application/json'
+        }
       }
-    });
+    );
 
     res.status(200).send('Message sent');
-  } catch (err) {
-    console.error('LINE送信エラー:', err.response?.data || err.message);
-    res.status(500).send('Error sending message');
+  } catch (error) {
+    console.error('LINE送信エラー:', error.response?.data || error.message);
+    res.status(500).send('LINE送信失敗');
   }
 });
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+app.listen(PORT, () => console.log(`✅ Server running on port ${PORT}`));
