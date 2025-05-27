@@ -2,7 +2,7 @@
   'use strict';
 
   const LINE_USERS = {
-    '佐藤 優志': 'U428ecca76ad4736b8945bf51932a2835',
+    '佐藤 優志': 'U39cebdde0110906cd33358e02fa2bac0',
     '牧野 祐大': 'U0c3bffdf8edbaa1ac9dad388d628414f',
   };
 
