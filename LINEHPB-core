@@ -3,7 +3,7 @@
 
   const LINE_USERS = {
     '佐藤 優志': 'U428ecca76ad4736b8945bf51932a2835',
-    '牧野 祐大': 'LINE_USER_ID_2',
+    '牧野 祐大': 'U0c3bffdf8edbaa1ac9dad388d628414f',
   };
 
   const RENDER_WEBHOOK_URL = 'https://lineschedule-xd9p.onrender.com';
